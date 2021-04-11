@@ -1,7 +1,7 @@
 package main
 
 import (
-	"encoding/json"
+	"database/sql"
 	"fmt"
 	"html/template"
 	"log"
@@ -18,67 +18,61 @@ type File struct {
 	Size     int    `json:"size"`
 }
 
+var DB *sql.DB
 var files []File
 
 func homePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "Homepage lmao")
 }
 
+func fileBrowser(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprint(w, "Filebrowser brrr lmao")
+}
+
 func login(w http.ResponseWriter, r *http.Request) {
-	tmp, _ := template.ParseFiles("./static/login.html")
-	tmp.Execute(w, nil)
+	if r.Method == "GET" {
+		tmp, _ := template.ParseFiles("./static/login.html")
+		tmp.Execute(w, nil)
+	} else {
+		r.ParseForm()
+		username := r.Form.Get("username")
+		password := r.Form.Get("password")
+
+		if username == "doggo" && password == "maracuja" {
+			data := map[string]interface{}{
+				"err": "Invalid credentials!",
+			}
+			tmp, _ := template.ParseFiles("./static/login.html")
+			tmp.Execute(w, data)
+		} else {
+			http.Redirect(w, r, "/fileBrowser", http.StatusSeeOther)
+		}
+
+	}
+
 }
 
 func register(w http.ResponseWriter, r *http.Request) {
-	tmp, _ := template.ParseFiles("./static/register.html")
-	tmp.Execute(w, nil)
-}
-
-/*
-Returns all files in json format.
-*/
-func getFiles(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(files)
-	log.Print(files)
-}
-
-/*
-Returns a file(s) in json format which can be filtered on date, type, filename.
-Can only query 1 attribute at a time, otherwise a random attribute will be returned.
-*/
-func getFile(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	filename := r.URL.Query()["filename"]
-	filetype := r.URL.Query()["type"]
-	filedate := r.URL.Query()["date"]
-
-	var result []File
-
-	for _, object := range files {
-		if len(filename) == 0 {
-			if len(filetype) == 0 {
-				if len(filedate) == 0 {
-					break
-				} else if object.Date == filedate[0] {
-					result = append(result, object)
-				}
-			} else if object.Type == filetype[0] {
-				result = append(result, object)
-			}
-		} else if object.Filename == filename[0] {
-			result = append(result, object)
+	if r.Method == "GET" {
+		tmp, _ := template.ParseFiles("./static/register.html")
+		tmp.Execute(w, nil)
+	} else {
+		r.ParseForm()
+		err := addUserDB(r.FormValue("username"), r.FormValue("password"), DB)
+		if err != nil {
+			tmp, _ := template.ParseFiles("./static/register.html")
+			tmp.Execute(w, nil)
 		}
+		tmp, _ := template.ParseFiles("./static/login.html")
+		tmp.Execute(w, nil)
 	}
-
-	json.NewEncoder(w).Encode(result)
 }
 
 func handleRequests() {
 	http.HandleFunc("/", homePage)
 	http.HandleFunc("/register", register)
 	http.HandleFunc("/login", login)
+	http.HandleFunc("/fileBrowser", fileBrowser)
 	http.HandleFunc("/api/getFiles", getFiles)
 	http.HandleFunc("/api/getFile", getFile)
 	http.Handle("/static/css/style.css", http.StripPrefix("/static/css", http.FileServer(http.Dir("static/css"))))
@@ -88,7 +82,9 @@ func handleRequests() {
 
 func main() {
 	createDB()
+	DB = openDB()
 	files = append(files, File{Filename: "test.mkv", Path: "/static/", Type: "mkv", Date: "11/04/2021", Size: 10003})
 	files = append(files, File{Filename: "malaka.mkv", Path: "/static/", Type: "mkv", Date: "11/04/2021", Size: 10003})
 	handleRequests()
+	DB.Close()
 }

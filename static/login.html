@@ -30,9 +30,11 @@
                     <button type="submit" class="btn btn-block btn-dark lbtn">Login</button>
                     <a href="/register" class="btn btn-block btn-dark lbtn">Register</a>
                 </div>
-
-                <!--<div class="alert alert-warning" role="alert">
-                </div>-->
+                {{if .}}
+                <div class="alert alert-warning" role="alert">
+                    {{.err}}
+                </div>
+                {{end}}
 
             </form>
         </div>
