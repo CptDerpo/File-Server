@@ -63,8 +63,11 @@ func register(w http.ResponseWriter, r *http.Request) {
 			tmp, _ := template.ParseFiles("./static/register.html")
 			tmp.Execute(w, nil)
 		}
-		tmp, _ := template.ParseFiles("./static/login.html")
-		tmp.Execute(w, nil)
+		data := map[string]interface{}{
+			"suc": "Succesfully created account! Please login.",
+		}
+		tmp, _ := template.ParseFiles("./static/register.html")
+		tmp.Execute(w, data)
 	}
 }
 
