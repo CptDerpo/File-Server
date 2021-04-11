@@ -34,35 +34,43 @@ func register(w http.ResponseWriter, r *http.Request) {
 	tmp.Execute(w, nil)
 }
 
+/*
+Returns all files in json format.
+*/
 func getFiles(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(files)
 	log.Print(files)
 }
 
+/*
+Returns a file(s) in json format which can be filtered on date, type, filename.
+Can only query 1 attribute at a time, otherwise a random attribute will be returned.
+*/
 func getFile(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	filename, errfilename := r.URL.Query()["filename"]
-	filetype, errfiletype := r.URL.Query()["type"]
-	filedate, errfiledate := r.URL.Query()["date"]
+	filename := r.URL.Query()["filename"]
+	filetype := r.URL.Query()["type"]
+	filedate := r.URL.Query()["date"]
 
 	var result []File
 
 	for _, object := range files {
-		if object.Filename == filename[0] && !errfilename {
+		if len(filename) == 0 {
+			if len(filetype) == 0 {
+				if len(filedate) == 0 {
+					break
+				} else if object.Date == filedate[0] {
+					result = append(result, object)
+				}
+			} else if object.Type == filetype[0] {
+				result = append(result, object)
+			}
+		} else if object.Filename == filename[0] {
 			result = append(result, object)
 		}
-		if object.Type == filetype[0] && !errfiletype {
-			result = append(result, object)
-		}
-		if object.Date == filedate[0] && !errfiledate {
-			result = append(result, object)
-		}
-
 	}
-
-	log.Print(result)
 
 	json.NewEncoder(w).Encode(result)
 }
