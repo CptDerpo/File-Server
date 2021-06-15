@@ -16,10 +16,13 @@ func createDB() {
 	}
 	defer db.Close()
 
-	sqlStmt := `
-	CREATE TABLE IF NOT EXISTS User (id integer not null primary key, username text, password text, admin integer);
-	CREATE TABLE IF NOT EXISTS File (id integer not null primary key, filename text, path string, filtetype text, date datetime, size int);
-	`
+	sqlStmt := `CREATE TABLE IF NOT EXISTS User (
+		id integer NOT NULL PRIMARY KEY, 
+		username text, 
+		password text, 
+		admin integer
+	);`
+
 	_, err = db.Exec(sqlStmt)
 
 	if err != nil {
@@ -38,8 +41,8 @@ func openDB() *sql.DB {
 	return db
 }
 
-func addUserDB(username string, password string, db *sql.DB) error {
-	user := db.QueryRow(`SELECT username FROM User WHERE username = ?`, username).Scan(&username)
+func addUserDB(username string, password string) error {
+	user := DB.QueryRow(`SELECT username FROM User WHERE username = ?;`, username).Scan(&username)
 
 	if user != sql.ErrNoRows {
 		return errors.New("user already exists")
@@ -49,14 +52,14 @@ func addUserDB(username string, password string, db *sql.DB) error {
 		return errors.New("password is too short, must be at least 8 chars")
 	}
 
-	sqlStmt, _ := db.Prepare("INSERT INTO User (username, password, admin) VALUES (?, ?, 0)")
-	sqlStmt.Exec(username, password)
-	return nil
+	sqlStmt, _ := DB.Prepare("INSERT INTO User (username, password, admin) VALUES (?, ?, 0);")
+	_, err := sqlStmt.Exec(username, password)
+	return err
 }
 
-//implement exception
-func removeUserDB(username string, db *sql.DB) error {
-	sqlStmt, _ := db.Prepare(`DELETE FROM User WHERE username=?`)
-	sqlStmt.Exec(username)
-	return nil
+func removeUserDB(username string) error {
+	sqlStmt, _ := DB.Prepare(`DELETE FROM User WHERE username=?`)
+	_, err := sqlStmt.Exec(username)
+
+	return err
 }
