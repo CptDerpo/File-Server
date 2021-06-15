@@ -10,16 +10,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-type File struct {
-	Filename string `json:"filename"`
-	Path     string `json:"path"`
-	Type     string `json:"filetype"`
-	Date     string `json:"date"`
-	Size     int    `json:"size"`
-}
-
 var DB *sql.DB
-var files []File
 
 func homePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "Homepage lmao")
@@ -58,10 +49,13 @@ func register(w http.ResponseWriter, r *http.Request) {
 		tmp.Execute(w, nil)
 	} else {
 		r.ParseForm()
-		err := addUserDB(r.FormValue("username"), r.FormValue("password"), DB)
+		err := addUserDB(r.FormValue("username"), r.FormValue("password"))
 		if err != nil {
+			data := map[string]interface{}{
+				"err": "User registration error",
+			}
 			tmp, _ := template.ParseFiles("./static/register.html")
-			tmp.Execute(w, nil)
+			tmp.Execute(w, data)
 		}
 		data := map[string]interface{}{
 			"suc": "Succesfully created account! Please login.",
@@ -71,13 +65,24 @@ func register(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func upload(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		tmp, _ := template.ParseFiles("./static/upload.html")
+		tmp.Execute(w, nil)
+	} else {
+		http.Redirect(w, r, "/api/uploadFile", http.StatusSeeOther)
+	}
+
+}
+
 func handleRequests() {
 	http.HandleFunc("/", homePage)
 	http.HandleFunc("/register", register)
 	http.HandleFunc("/login", login)
-	http.HandleFunc("/fileBrowser", fileBrowser)
-	http.HandleFunc("/api/getFiles", getFiles)
-	http.HandleFunc("/api/getFile", getFile)
+	http.HandleFunc("/api/downloadFile", downloadFile)
+	http.HandleFunc("/api/uploadFile", uploadFile)
+	http.HandleFunc("/api/removeFile", removeFile)
+	http.HandleFunc("/upload", upload)
 	http.Handle("/static/css/style.css", http.StripPrefix("/static/css", http.FileServer(http.Dir("static/css"))))
 	http.Handle("/lol/test.mkv", http.StripPrefix("/lol", http.FileServer(http.Dir("static"))))
 	log.Fatal(http.ListenAndServe(":8081", nil))
@@ -86,8 +91,6 @@ func handleRequests() {
 func main() {
 	createDB()
 	DB = openDB()
-	files = append(files, File{Filename: "test.mkv", Path: "/static/", Type: "mkv", Date: "11/04/2021", Size: 10003})
-	files = append(files, File{Filename: "malaka.mkv", Path: "/static/", Type: "mkv", Date: "11/04/2021", Size: 10003})
 	handleRequests()
 	DB.Close()
 }
