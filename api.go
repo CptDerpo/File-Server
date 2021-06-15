@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -33,7 +34,7 @@ func downloadFile(w http.ResponseWriter, r *http.Request) {
 }
 
 func uploadFile(w http.ResponseWriter, r *http.Request) {
-	r.ParseMultipartForm(10 << 30) //10 * 1024^3 bytes = 10GiB max
+	r.ParseMultipartForm(4 << 30) //4 * 1024^3 bytes = 4GiB max in ram, rest on disk, add max file size
 	file, handler, err := r.FormFile("myFile")
 
 	if err != nil {
@@ -107,4 +108,17 @@ func moveFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(200)
+}
+
+func getDir(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	dirpath := r.URL.Query().Get("path")
+	result, err := dirTreeOS(pathpkg.Join("home", dirpath))
+
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(500)
+	}
+
+	json.NewEncoder(w).Encode(result)
 }

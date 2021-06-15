@@ -82,6 +82,7 @@ func handleRequests() {
 	http.HandleFunc("/api/downloadFile", downloadFile)
 	http.HandleFunc("/api/uploadFile", uploadFile)
 	http.HandleFunc("/api/removeFile", removeFile)
+	http.HandleFunc("/api/getDir", getDir)
 	http.HandleFunc("/upload", upload)
 	http.Handle("/static/css/style.css", http.StripPrefix("/static/css", http.FileServer(http.Dir("static/css"))))
 	http.Handle("/lol/test.mkv", http.StripPrefix("/lol", http.FileServer(http.Dir("static"))))

@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
+	"log"
 	"os"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -31,4 +33,44 @@ func moveFileOS(oldPath string, newPath string) error {
 func deleteFileOS(path string) error {
 	err := os.Remove(path)
 	return err
+}
+
+type Tree struct {
+	Filename string `json:"name"`
+	IsDir    bool   `json:"isdir"`
+	Filesize int64  `json:"size"`
+	ModDate  string `json:"date"`
+}
+
+func dirTreeOS(path string) ([]Tree, error) {
+	files, err := os.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+
+	var tree []Tree
+
+	for _, f := range files {
+		fileinfo, err := f.Info()
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+
+		var entry Tree
+		entry.Filename = fileinfo.Name()
+		entry.IsDir = fileinfo.IsDir()
+		entry.Filesize = fileinfo.Size()
+		entry.ModDate = fileinfo.ModTime().String()
+		tree = append(tree, entry)
+	}
+
+	result, err := json.Marshal(tree)
+
+	if err != nil {
+		return nil, err
+	}
+	log.Printf(string([]byte((result))))
+
+	return tree, nil
 }
