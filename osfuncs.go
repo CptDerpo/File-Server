@@ -28,7 +28,6 @@ func moveFileOS(oldPath string, newPath string) error {
 
 //deleteFile deletes the file which corresponds to the given fileid.
 //Also removes the entry from the database.
-//Returns error if any DB operation fails.
 func deleteFileOS(path string) error {
 	err := os.Remove(path)
 	return err
