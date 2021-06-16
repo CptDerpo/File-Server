@@ -14,6 +14,9 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+/*
+	Filesystem stuff
+*/
 func downloadFile(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -121,4 +124,31 @@ func getDir(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(result)
+}
+
+/*
+	Login/Register stuff
+*/
+
+func createUser(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	username := r.URL.Query().Get("username")
+	password := r.URL.Query().Get("password")
+
+	if err := addUserDB(username, password); err != nil {
+		w.WriteHeader(500)
+		return
+	}
+	w.WriteHeader(200)
+}
+
+func removeUser(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	username := r.URL.Query().Get("username")
+
+	if err := removeUserDB(username); err != nil {
+		w.WriteHeader(500)
+		return
+	}
+	w.WriteHeader(200)
 }

@@ -77,15 +77,16 @@ func upload(w http.ResponseWriter, r *http.Request) {
 
 func handleRequests() {
 	http.HandleFunc("/", homePage)
-	http.HandleFunc("/register", register)
-	http.HandleFunc("/login", login)
 	http.HandleFunc("/api/downloadFile", downloadFile)
 	http.HandleFunc("/api/uploadFile", uploadFile)
 	http.HandleFunc("/api/removeFile", removeFile)
 	http.HandleFunc("/api/getDir", getDir)
 	http.HandleFunc("/upload", upload)
-	http.Handle("/static/css/style.css", http.StripPrefix("/static/css", http.FileServer(http.Dir("static/css"))))
-	http.Handle("/lol/test.mkv", http.StripPrefix("/lol", http.FileServer(http.Dir("static"))))
+	http.HandleFunc("/api/createUser", createUser)
+	http.HandleFunc("/api/removeUser", removeUser)
+	//login user
+	//modify user
+
 	log.Fatal(http.ListenAndServe(":8081", nil))
 }
 
